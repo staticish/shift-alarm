@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shift alarm</string>
+    <string name="tagline">Every night at 03:00 it reads your Ubeya shifts for the day and sets an alarm 90 minutes before the next one.</string>
+    <string name="next_alarm">Next alarm</string>
+    <string name="section_ubeya">Ubeya</string>
+    <string name="section_upcoming">Upcoming shifts</string>
+    <string name="section_setup">Keep it running on this vivo</string>
+    <string name="setup_note">vivo stops apps it thinks are idle. These switches stop it doing that to this one.</string>
+    <string name="section_try">Try it</string>
+    <string name="test_ring">Ring a test alarm in 1 minute</string>
+    <string name="test_check">Run the nightly check in 2 minutes</string>
+    <string name="section_history">History</string>
+    <string name="nothing_yet">Nothing yet. Shifts show here after the first check.</string>
+    <string name="sign_in_title">Sign in to Ubeya</string>
+    <string name="sign_in_hint">Use your phone number. Google sign-in does not work inside apps.</string>
+    <string name="close">Close</string>
+    <string name="stop">Stop</string>
+    <string name="allow_background">Allow</string>
+</resources>
