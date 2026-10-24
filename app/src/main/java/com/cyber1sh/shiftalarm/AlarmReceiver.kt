@@ -44,6 +44,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
         const val REASON_DAILY = "nightly"
         const val REASON_RETRY = "retry"
+        const val REASON_UPDATE = "update"
         const val REASON_TEST = "test run"
         const val REASON_MANUAL = "check now"
         const val REASON_SIGNED_IN = "signed in"

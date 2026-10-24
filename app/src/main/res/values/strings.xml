@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Shift alarm</string>
-    <string name="tagline">Every night at 03:00 it reads your Ubeya shifts for the day and sets an alarm 90 minutes before the next one.</string>
+    <string name="tagline">Every night at 03:00 it reads your Ubeya shifts and sets an alarm 90 minutes before the next one. It looks again every 3 hours, in case a shift changes.</string>
     <string name="next_alarm">Next alarm</string>
     <string name="section_ubeya">Ubeya</string>
     <string name="section_upcoming">Upcoming shifts</string>

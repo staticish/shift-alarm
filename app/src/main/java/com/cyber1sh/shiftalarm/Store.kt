@@ -50,6 +50,12 @@ class Store(context: Context) {
             prefs.edit().putLong(NEXT_CHECK, value).commit()
         }
 
+    var nextUpdateAt: Long
+        get() = prefs.getLong(NEXT_UPDATE, 0L)
+        set(value) {
+            prefs.edit().putLong(NEXT_UPDATE, value).commit()
+        }
+
     val lastCheckAt: Long get() = prefs.getLong(LAST_AT, 0L)
     val lastCheckOk: Boolean get() = prefs.getBoolean(LAST_OK, false)
     val lastCheckText: String get() = prefs.getString(LAST_TEXT, "").orEmpty()
@@ -141,6 +147,7 @@ class Store(context: Context) {
         private const val SNOOZE_AT = "snooze_at"
         private const val SNOOZE_SHIFT = "snooze_shift"
         private const val NEXT_CHECK = "next_check_at"
+        private const val NEXT_UPDATE = "next_update_at"
         private const val LAST_AT = "last_check_at"
         private const val LAST_OK = "last_check_ok"
         private const val LAST_TEXT = "last_check_text"

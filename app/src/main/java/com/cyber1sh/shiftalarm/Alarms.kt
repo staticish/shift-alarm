@@ -21,6 +21,9 @@ object Alarms {
     const val CHECK_HOUR = 3
     const val RETRY_MS = 15L * 60L * 1000L
 
+    /** Between nightly checks, look again this often, so a manager's change reaches the alarm. */
+    const val UPDATE_MS = 3L * 60L * 60L * 1000L
+
     private const val RC_SHIFT = 1
     private const val RC_SNOOZE = 2
     private const val RC_TEST_RING = 3
@@ -28,6 +31,7 @@ object Alarms {
     private const val RC_RETRY = 5
     private const val RC_TEST_CHECK = 6
     private const val RC_SHOW = 7
+    private const val RC_UPDATE = 8
 
     private const val FLAGS = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -47,6 +51,13 @@ object Alarms {
     fun armRetry(c: Context) = exact(c, System.currentTimeMillis() + RETRY_MS, checkIntent(c, RC_RETRY, AlarmReceiver.REASON_RETRY))
 
     fun cancelRetry(c: Context) = cancel(c, checkIntent(c, RC_RETRY, AlarmReceiver.REASON_RETRY))
+
+    /** The next look for changed shifts, [delayMs] from now. */
+    fun armUpdate(c: Context, delayMs: Long = UPDATE_MS) {
+        val at = System.currentTimeMillis() + delayMs
+        exact(c, at, checkIntent(c, RC_UPDATE, AlarmReceiver.REASON_UPDATE))
+        Store(c).nextUpdateAt = at
+    }
 
     /** The "run the nightly check in 2 minutes" button: the same path the 03:00 alarm takes. */
     fun armTestCheck(c: Context, delayMs: Long) =
@@ -88,6 +99,8 @@ object Alarms {
         val store = Store(c)
         val now = System.currentTimeMillis()
         if (forceDaily || store.nextCheckAt <= now || !dailyArmed(c)) armDailyCheck(c)
+        // A missed look (phone off, app stopped) comes soon rather than three hours on.
+        if (store.nextUpdateAt <= now) armUpdate(c, RETRY_MS)
 
         val alarm = store.alarm
         if (alarm != null) {

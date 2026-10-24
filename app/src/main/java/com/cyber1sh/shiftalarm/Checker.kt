@@ -6,6 +6,7 @@ import java.time.ZoneId
 
 /**
  * One check: read the bookings, pick the next shift whose alarm is still ahead, arm its alarm.
+ * Runs at 03:00 and every 3 hours after any check; if the shift moved, it says so.
  * If Ubeya cannot be read, the alarm already armed stays as it is.
  */
 class Checker(private val context: Context) {
@@ -33,11 +34,18 @@ class Checker(private val context: Context) {
             val places = if (Bookings.needsPlaces(json)) runCatching { Bookings.places(ubeya.locationsJson()) }.getOrDefault(emptyMap()) else emptyMap()
             val shifts = Bookings.parse(json, ZoneId.systemDefault(), places)
             val next = Shift.next(shifts, now)
+            val before = store.alarm?.takeIf { it.alarmAt > now }
             store.upcoming = shifts.filter { it.alarmAt > now + Shift.MARGIN_MS }
             store.signedIn = 1
             store.retries = 0
             Alarms.cancelRetry(context)
             if (next != null) Alarms.armShift(context, next) else Alarms.cancelShift(context)
+            val changed = before != null && before.start != next?.start
+            if (changed && reason != AlarmReceiver.REASON_MANUAL) {
+                val text = if (next != null) "Alarm moved to ${Fmt.at(context, next.alarmAt)}, for your ${Fmt.time(context, next.start)} shift." else "That shift is gone from Ubeya, so its alarm is off."
+                Notices.problem(context, "Your shift changed", text, Notices.Open.MAIN)
+                store.log("$reason: shift changed (was ${Fmt.stamp(before!!.start)})")
+            }
 
             val read = "${Bookings.count(json)} bookings, ${shifts.size} with times"
             if (next != null) {
@@ -45,13 +53,13 @@ class Checker(private val context: Context) {
                 val text = "90 minutes before your ${Fmt.time(context, next.start)} shift" + if (next.title.isNotBlank()) " · ${next.title}" else ""
                 store.setLastCheck(now, true, "$title, $text.")
                 store.log("$reason: $read; alarm ${Fmt.stamp(next.alarmAt)} for the ${Fmt.stamp(next.start)} shift")
-                if (reason != AlarmReceiver.REASON_MANUAL) Notices.result(context, title, text)
+                if (reason != AlarmReceiver.REASON_MANUAL && reason != AlarmReceiver.REASON_UPDATE) Notices.result(context, title, text)
             } else {
                 store.setLastCheck(now, true, "No upcoming shifts on Ubeya, so no alarm is set.")
                 store.log("$reason: $read; no shift ahead, no alarm")
-                if (reason != AlarmReceiver.REASON_MANUAL) Notices.result(context, "No shift alarm set", "Ubeya shows no upcoming shifts.")
+                if (reason != AlarmReceiver.REASON_MANUAL && reason != AlarmReceiver.REASON_UPDATE) Notices.result(context, "No shift alarm set", "Ubeya shows no upcoming shifts.")
             }
-            Notices.clearProblem(context)
+            if (!changed) Notices.clearProblem(context)
         } catch (e: Ubeya.SignedOut) {
             store.signedIn = 0
             store.setLastCheck(now, false, "Signed out of Ubeya. Sign in again to keep the alarm up to date.")
@@ -60,13 +68,15 @@ class Checker(private val context: Context) {
         } catch (e: Exception) {
             val tries = store.retries + 1
             store.retries = tries
-            val again = tries <= MAX_RETRIES
+            // A failed 3-hourly look just waits for the next one.
+            val again = tries <= MAX_RETRIES && reason != AlarmReceiver.REASON_UPDATE
             if (again) Alarms.armRetry(context)
             val why = e.message ?: e.javaClass.simpleName
             store.setLastCheck(now, false, "Couldn't read Ubeya ($why)." + if (again) " Trying again at ${Fmt.time(context, now + Alarms.RETRY_MS)}." else "")
             store.log("$reason: failed ($why), attempt $tries")
             if (!again) Notices.problem(context, "Couldn't read your Ubeya shifts", "Tried $tries times. ${kept()}", Notices.Open.MAIN)
         } finally {
+            Alarms.armUpdate(context)
             ubeya.cookieNotes.forEach { store.log("Ubeya set cookie $it") }
         }
     }
