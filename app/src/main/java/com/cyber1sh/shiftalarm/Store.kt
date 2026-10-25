@@ -44,6 +44,14 @@ class Store(context: Context) {
         prefs.edit().remove(SNOOZE_AT).remove(SNOOZE_SHIFT).commit()
     }
 
+    /** Start times of shifts whose alarm was skipped by hand; checks leave them alone. */
+    var skipped: Set<Long>
+        get() = prefs.getString(SKIPPED, "").orEmpty().split(',').mapNotNull { it.toLongOrNull() }.toSet()
+        set(value) {
+            val keep = value.filter { it > System.currentTimeMillis() - 24L * 60L * 60L * 1000L }
+            prefs.edit().putString(SKIPPED, keep.joinToString(",")).commit()
+        }
+
     var nextCheckAt: Long
         get() = prefs.getLong(NEXT_CHECK, 0L)
         set(value) {
@@ -148,6 +156,7 @@ class Store(context: Context) {
         private const val SNOOZE_SHIFT = "snooze_shift"
         private const val NEXT_CHECK = "next_check_at"
         private const val NEXT_UPDATE = "next_update_at"
+        private const val SKIPPED = "skipped"
         private const val LAST_AT = "last_check_at"
         private const val LAST_OK = "last_check_ok"
         private const val LAST_TEXT = "last_check_text"

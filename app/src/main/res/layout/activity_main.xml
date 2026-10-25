@@ -95,6 +95,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp" />
+
+            <Button
+                android:id="@+id/alarm_skip"
+                style="@style/Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="12dp"
+                android:minHeight="40dp"
+                android:text="@string/skip_alarm"
+                android:visibility="gone" />
         </LinearLayout>
 
         <Button

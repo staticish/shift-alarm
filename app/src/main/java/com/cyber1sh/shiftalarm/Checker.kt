@@ -33,7 +33,8 @@ class Checker(private val context: Context) {
             // Venue names only matter for display, so a failure here changes nothing else.
             val places = if (Bookings.needsPlaces(json)) runCatching { Bookings.places(ubeya.locationsJson()) }.getOrDefault(emptyMap()) else emptyMap()
             val shifts = Bookings.parse(json, ZoneId.systemDefault(), places)
-            val next = Shift.next(shifts, now)
+            val skipped = store.skipped
+            val next = Shift.next(shifts.filter { it.start !in skipped }, now)
             val before = store.alarm?.takeIf { it.alarmAt > now }
             store.upcoming = shifts.filter { it.alarmAt > now + Shift.MARGIN_MS }
             store.signedIn = 1

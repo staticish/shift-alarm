@@ -60,6 +60,11 @@ class MainActivity : Activity(), SharedPreferences.OnSharedPreferenceChangeListe
 
         checkNow.setOnClickListener { CheckService.start(this, AlarmReceiver.REASON_MANUAL) }
         ubeyaButton.setOnClickListener { startActivity(Intent(this, LoginActivity::class.java)) }
+        findViewById<View>(R.id.alarm_skip).setOnClickListener {
+            val alarm = store.alarm ?: return@setOnClickListener
+            Alarms.skipShift(this, alarm)
+            Toast.makeText(this, "Skipped. Later checks won't set it again.", Toast.LENGTH_LONG).show()
+        }
         findViewById<View>(R.id.test_ring).setOnClickListener {
             Alarms.armTestRing(this, 60_000L)
             store.log("test alarm set for a minute from now")
@@ -104,11 +109,13 @@ class MainActivity : Activity(), SharedPreferences.OnSharedPreferenceChangeListe
             alarmDetail.text = "${Fmt.dayWord(this, alarm.alarmAt)}, 90 minutes before your ${Fmt.time(this, alarm.start)} shift"
             alarmTitle.text = alarm.title
             alarmTitle.visibility = if (alarm.title.isBlank()) View.GONE else View.VISIBLE
+            findViewById<View>(R.id.alarm_skip).visibility = View.VISIBLE
         } else {
             alarmTime.text = "None"
             alarmTime.setTextColor(getColor(R.color.muted))
             alarmDetail.text = if (store.signedIn == 1) "No upcoming shift found on Ubeya." else "Sign in to Ubeya and the app finds your next shift."
             alarmTitle.visibility = View.GONE
+            findViewById<View>(R.id.alarm_skip).visibility = View.GONE
         }
         if (store.snoozeAt > now) alarmDetail.append("\nSnoozed until ${Fmt.time(this, store.snoozeAt)}.")
 

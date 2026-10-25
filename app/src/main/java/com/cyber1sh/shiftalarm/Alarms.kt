@@ -70,6 +70,15 @@ object Alarms {
         Store(c).alarm = shift
     }
 
+    /** Skips the armed alarm (the shift stays on Ubeya) and arms the following shift's. */
+    fun skipShift(c: Context, shift: Shift) {
+        val store = Store(c)
+        store.skipped = store.skipped + shift.start
+        store.log("alarm for the ${Fmt.stamp(shift.start)} shift skipped by hand")
+        afterShiftRang(c, shift)
+        if (store.alarm == null) cancel(c, ringIntent(c, RC_SHIFT, RingInfo(RingInfo.SHIFT, null)))
+    }
+
     fun cancelShift(c: Context) {
         cancel(c, ringIntent(c, RC_SHIFT, RingInfo(RingInfo.SHIFT, null)))
         Store(c).alarm = null
@@ -86,7 +95,8 @@ object Alarms {
     /** After a shift's alarm rings, arm the following shift's from the last check's list. */
     fun afterShiftRang(c: Context, rang: Shift?) {
         val store = Store(c)
-        val next = Shift.next(store.upcoming.filter { it != rang }, System.currentTimeMillis())
+        val skipped = store.skipped
+        val next = Shift.next(store.upcoming.filter { it != rang && it.start !in skipped }, System.currentTimeMillis())
         if (next != null) armShift(c, next) else store.alarm = null
     }
 
