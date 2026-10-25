@@ -100,7 +100,7 @@ object Alarms {
         val now = System.currentTimeMillis()
         if (forceDaily || store.nextCheckAt <= now || !dailyArmed(c)) armDailyCheck(c)
         // A missed look (phone off, app stopped) comes soon rather than three hours on.
-        if (store.nextUpdateAt <= now) armUpdate(c, RETRY_MS)
+        if (store.nextUpdateAt <= now || !armed(c, RC_UPDATE)) armUpdate(c, RETRY_MS)
 
         val alarm = store.alarm
         if (alarm != null) {
@@ -140,6 +140,12 @@ object Alarms {
      * Whether the 03:00 check's PendingIntent still exists. A restart or a force stop deletes it.
      * It outlives a fired alarm, which is why [rearm] also looks at [Store.nextCheckAt].
      */
+    /** Whether the check PendingIntent with [code] still exists (a stop or restart deletes it). */
+    private fun armed(c: Context, code: Int): Boolean {
+        val probe = Intent(c, AlarmReceiver::class.java).setAction(AlarmReceiver.ACTION_CHECK)
+        return PendingIntent.getBroadcast(c, code, probe, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE) != null
+    }
+
     private fun dailyArmed(c: Context): Boolean {
         // filterEquals ignores extras, so a bare intent with the same action finds the armed one.
         val probe = Intent(c, AlarmReceiver::class.java).setAction(AlarmReceiver.ACTION_CHECK)

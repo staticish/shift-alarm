@@ -27,8 +27,8 @@ android {
         applicationId = "com.cyber1sh.shiftalarm"
         minSdk = 26
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 7
+        versionName = "1.6"
     }
 
     val canSign = keystoreFile.exists() && keystoreProps.getProperty("storePassword") != null

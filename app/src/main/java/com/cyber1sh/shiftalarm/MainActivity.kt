@@ -124,15 +124,18 @@ class MainActivity : Activity(), SharedPreferences.OnSharedPreferenceChangeListe
         when (store.signedIn) {
             1 -> {
                 ubeyaState.text = if (store.who.isNotBlank()) "Signed in as ${store.who}" else "Signed in"
-                ubeyaDetail.text = "The session stays on this phone."
-                ubeyaButton.text = "Open"
+                ubeyaDetail.text = "You won't need to sign in again unless Ubeya ends the session; the app tells you if it does."
+                // No way back into Ubeya's site from here: opening it later logs the session out.
+                ubeyaButton.visibility = View.GONE
             }
             0 -> {
+                ubeyaButton.visibility = View.VISIBLE
                 ubeyaState.text = "Signed out"
                 ubeyaDetail.text = "Ubeya ended the session. Sign in again."
                 ubeyaButton.text = "Sign in"
             }
             else -> {
+                ubeyaButton.visibility = View.VISIBLE
                 ubeyaState.text = "Not signed in"
                 ubeyaDetail.text = "Use your phone number. Google sign-in does not work inside apps."
                 ubeyaButton.text = "Sign in"

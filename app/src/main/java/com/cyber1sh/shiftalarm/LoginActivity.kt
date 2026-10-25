@@ -18,6 +18,11 @@ import android.widget.TextView
 /**
  * Ubeya's own crew site in a WebView, where you sign in. The app never sees the code or
  * number typed here; it only keeps the cookies the site sets, as a browser would.
+ *
+ * The site is only for signing in. Its web build logs itself out 10 hours after sign-in
+ * (`setTimeout(logout, 36e6 - age)` on the "loggedInTime" it stores), and that logout ends the
+ * server session the background checks use. So once signed in, the page is closed straight away,
+ * and the app never opens it again while the session works.
  */
 class LoginActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
@@ -107,11 +112,12 @@ class LoginActivity : Activity() {
         val who = if (name.isNotEmpty()) "Signed in as $name." else "Signed in."
         if (fresh) {
             store.log("signed in to Ubeya" + if (name.isNotEmpty()) " as $name" else "")
-            status.text = "$who Reading your shifts now. You can close this."
             CheckService.start(this, AlarmReceiver.REASON_SIGNED_IN)
-        } else {
-            status.text = "$who You can close this."
         }
+        // Leave the site before its 10-hour logout timer can matter.
+        web.loadUrl("about:blank")
+        status.text = "$who Reading your shifts now."
+        handler.postDelayed({ finish() }, 1500L)
     }
 
     override fun onResume() {
